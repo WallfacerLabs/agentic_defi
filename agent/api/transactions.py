@@ -37,13 +37,14 @@ class TransactionAPI:
 
         response = self.client.make_request(endpoint, params)
 
-        # Parse transaction actions
+        # Parse transaction actions (tx data is nested under action['tx'])
         transactions = []
         for action in response.get('actions', []):
+            tx = action.get('tx', {})
             transactions.append({
-                'to': action.get('to'),
-                'data': action.get('data'),
-                'value': action.get('value', '0'),
+                'to': tx.get('to'),
+                'data': tx.get('data'),
+                'value': tx.get('value', '0'),
             })
 
         return transactions
@@ -52,38 +53,43 @@ class TransactionAPI:
         self,
         user_address: str,
         vault_address: str,
-        amount_tokens: float,
+        lp_token_amount: float,
+        lp_decimals: int,
         asset_address: str,
         network: str = 'base'
     ) -> List[dict]:
         """
         Generate redeem transaction
         Only uses default step (requirement Q11 - no multi-step redemption)
+
+        Args:
+            lp_token_amount: Amount of LP tokens to redeem (e.g., 0.5 LP tokens)
+            lp_decimals: Decimals of the LP token (usually 18)
         """
         endpoint = f"/v2/transactions/redeem/{user_address}/{network}/{vault_address}"
 
-        # Convert amount to wei (USDC has 6 decimals)
-        amount_wei = int(amount_tokens * 1e6)
+        # Convert LP token amount to wei using LP token decimals
+        amount_wei = int(lp_token_amount * (10 ** lp_decimals))
 
         params = {
             'amount': amount_wei,
             'assetAddress': asset_address,
-            'step': 'default',  # Only use default step (Q11)
         }
 
         response = self.client.make_request(endpoint, params)
 
-        # Parse transaction actions (use only default step)
+        # Parse transaction actions (use only default step, tx data nested under action['tx'])
         transactions = []
         actions = response.get('actions', [])
 
         # If multiple steps exist, only use the first/default one (Q11)
         if actions:
             for action in actions:
+                tx = action.get('tx', {})
                 transactions.append({
-                    'to': action.get('to'),
-                    'data': action.get('data'),
-                    'value': action.get('value', '0'),
+                    'to': tx.get('to'),
+                    'data': tx.get('data'),
+                    'value': tx.get('value', '0'),
                 })
 
         return transactions

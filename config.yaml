@@ -17,7 +17,7 @@ investment:
 # Vault Selection Criteria (passed as API parameters)
 criteria:
   min_apy: 0.01                    # 1% minimum APY
-  min_tvl: 1000000                 # $1M minimum TVL
+  min_tvl: 100000000                 # $1M minimum TVL
   only_transactional: true         # Only vaults supporting transactions
   apy_interval: "1day"             # Always use 1-day APY (requirement Q27)
 

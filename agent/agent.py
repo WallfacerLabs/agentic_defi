@@ -264,18 +264,19 @@ class Agent:
 
         print(f"Found: {position['vault_name']}")
 
-        # 3. Calculate redeem amount
-        redeem_amount_tokens = position['balance_tokens'] * (percentage / 100)
+        # 3. Calculate redeem amount (in LP tokens, not asset tokens!)
+        redeem_lp_tokens = position['balance_lp_tokens'] * (percentage / 100)
         redeem_amount_usd = position['balance_usd'] * (percentage / 100)
 
-        print(f"Redeem amount: {format_usd(redeem_amount_usd, self.display_decimals)}")
+        print(f"Redeem amount: {format_usd(redeem_amount_usd, self.display_decimals)} ({redeem_lp_tokens:.6f} LP tokens)")
 
         # 4. Generate transaction (Q11 - single step only)
         print("Generating redemption transaction...")
         transactions = self.transaction_api.generate_redeem_tx(
             self.wallet.address,
             position['vault_address'],
-            redeem_amount_tokens,
+            redeem_lp_tokens,
+            position['lp_decimals'],
             self.asset_address,
             self.network
         )

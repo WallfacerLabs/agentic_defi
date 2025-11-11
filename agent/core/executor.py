@@ -64,25 +64,35 @@ class TransactionExecutor:
 
         return True, ""
 
-    def execute(self, tx_payload: dict, wait_for_confirmation: bool = True) -> str:
+    def execute(self, tx_payload: dict, wait_for_confirmation: bool = True, use_pending_nonce: bool = False) -> str:
         """
         Execute a single transaction
         Returns transaction hash
+
+        Args:
+            tx_payload: Transaction data (to, data, value)
+            wait_for_confirmation: Wait for transaction to be mined
+            use_pending_nonce: Use 'pending' block for nonce (for sequential transactions)
         """
         # Build transaction
+        # Use 'pending' nonce to include pending transactions in the count
+        nonce_block = 'pending' if use_pending_nonce else 'latest'
+        nonce = self.w3.eth.get_transaction_count(self.wallet.address, nonce_block)
+
         transaction = {
             'from': self.wallet.address,
             'to': tx_payload['to'],
             'data': tx_payload['data'],
             'value': int(tx_payload.get('value', 0)),
-            'nonce': self.w3.eth.get_transaction_count(self.wallet.address),
+            'nonce': nonce,
             'chainId': self.w3.eth.chain_id,
         }
 
         # Estimate gas
         try:
             gas_estimate = self.w3.eth.estimate_gas(transaction)
-            transaction['gas'] = int(gas_estimate * 1.1)  # 10% buffer
+            # Use 50% buffer for complex vault interactions (10% was too low)
+            transaction['gas'] = int(gas_estimate * 1.5)
         except Exception as e:
             raise Exception(f"Gas estimation failed: {str(e)}")
 
@@ -114,7 +124,9 @@ class TransactionExecutor:
 
         for i, tx_payload in enumerate(tx_payloads):
             try:
-                tx_hash = self.execute(tx_payload, wait_for_confirmation=True)
+                # For second+ transactions, use pending nonce to account for previous txs
+                use_pending = i > 0
+                tx_hash = self.execute(tx_payload, wait_for_confirmation=True, use_pending_nonce=use_pending)
                 tx_hashes.append(tx_hash)
             except Exception as e:
                 # If approval succeeded but deposit failed, DO NOT revoke (Q24)

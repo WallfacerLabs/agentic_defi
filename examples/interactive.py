@@ -26,36 +26,41 @@ def main():
     print("   agent.show_state()\n")
     agent.show_state()
 
-    # Show idle assets
-    print("3. Check idle USDC:")
-    print("   agent.show_idle_assets()\n")
-    agent.show_idle_assets()
-
     # Show positions
-    print("4. View your positions:")
+    print("3. View your positions:")
     print("   agent.show_positions()\n")
     agent.show_positions()
 
     # Deploy capital (commented - uncomment to actually deploy)
-    print("5. Deploy 10% of idle USDC to best vault:")
+    print("4. Deploy 10% of idle USDC to best vault:")
     print("   agent.deploy_capital(10)")
     print("   [Command commented - uncomment to execute]\n")
     # agent.deploy_capital(10)
 
     # Redeem (commented - uncomment to actually redeem)
-    print("6. Redeem 50% from a position by nickname:")
-    print("   agent.redeem('YearnUSDCV', 50)")
+    print("5. Redeem 50% from a position by nickname:")
+    print("   agent.redeem('SparkUSDCV', 50)")
     print("   [Command commented - uncomment to execute]\n")
-    # agent.redeem('YearnUSDCV', 50)
+    # agent.redeem('SparkUSDCV', 50)
 
     # Redeem all (commented - uncomment to actually redeem all)
-    print("7. Redeem all positions:")
+    print("6. Redeem all positions:")
     print("   agent.redeem_all()")
     print("   [Command commented - uncomment to execute]\n")
     # agent.redeem_all()
 
     print("=== End of Guide ===\n")
-    print("Tip: Uncomment the actual commands above to execute them.")
+    print("Dropping into interactive Python REPL...")
+    print("The 'agent' variable is available for you to use.\n")
+    print("Try commands like:")
+    print("  agent.show_state()")
+    print("  agent.deploy_capital(10)")
+    print("  agent.show_positions()")
+    print("\nPress Ctrl+D (or Ctrl+Z on Windows) to exit.\n")
+
+    # Drop into interactive mode with agent available
+    import code
+    code.interact(local=locals(), banner="")
 
 
 if __name__ == "__main__":

@@ -31,7 +31,8 @@ class Wallet:
     def sign_transaction(self, transaction_dict: dict) -> bytes:
         """Sign a transaction"""
         signed = self.account.sign_transaction(transaction_dict)
-        return signed.rawTransaction
+        # In newer eth-account versions, it's raw_transaction (with underscore)
+        return signed.raw_transaction if hasattr(signed, 'raw_transaction') else signed.rawTransaction
 
     def __repr__(self):
         return f"Wallet(address={self.address})"
