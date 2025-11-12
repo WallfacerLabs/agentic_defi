@@ -79,12 +79,14 @@ defi_agent/
 ├── .env                        # Private keys (PRIVATE_KEY)
 ├── .env.example                # Template
 ├── requirements.txt            # Python dependencies
+├── README.md                   # Usage guide and examples
 ├── architecture.md             # This file
-├── architecture_diagram.md     # Mermaid diagrams
 │
 ├── agent/
 │   ├── __init__.py            # Exports Agent class
 │   ├── agent.py               # Main Agent class (Orchestration Layer)
+│   ├── display.py             # Display utilities (colors, formatting, tables)
+│   ├── utils.py               # Transaction manipulation utilities
 │   │
 │   ├── api/                   # API Layer - vaults.fyi interactions
 │   │   ├── __init__.py
@@ -129,13 +131,46 @@ defi_agent/
 - Coordinates calls between API, Strategy, and Core layers
 - **Validates gas balance upfront** before any transaction operations
 - **Validates minimum deposit amount** ($0.10) before deploying
-- Formats and prints results to console (2 decimal places for USD)
+- Formats and prints results to console using display utilities (2 decimal places for USD)
 - Handles verbose/concise error display modes
 - Validates inputs before processing
 - **Generates 10-character nicknames** from vault names (first 10 chars, spaces removed)
 - **Retries position display** after deployment (3 attempts, 5s delay)
+- **Handles floating-point precision** for 100% redemptions to avoid rounding errors
 
-### 2. API Layer (`agent/api/`)
+### 2. Display Utilities (`agent/display.py`)
+
+**Responsibility**: Terminal output formatting with colors and enhanced UX.
+
+**Key Functions**:
+- `format_state_summary()` - Format gas, USDC, and position summary
+- `format_positions_table()` - Create colorized table of positions
+- `format_deploy_success()` - Success message for deployments
+- `format_redeem_success()` - Success message for redemptions
+- `format_error()` - Error message formatting
+- `section_header()`, `subsection_header()` - Section formatting
+- `highlight_currency()`, `highlight_percentage()` - Value highlighting
+
+**Features**:
+- ANSI color support detection
+- Automatic color disable for non-TTY environments
+- Consistent formatting across all output
+- Enhanced readability with visual hierarchy
+
+### 3. Transaction Utilities (`agent/utils.py`)
+
+**Responsibility**: Transaction data manipulation utilities.
+
+**Key Functions**:
+- `modify_erc20_approve_amount()` - Modify approval amount in transaction data
+- `increase_approval_buffer()` - Add buffer to approval amounts (10% default)
+
+**Purpose**:
+- Handle ERC20 approve transaction encoding/decoding
+- Add safety buffers to approvals for vault fees and slippage
+- Direct transaction data manipulation
+
+### 4. API Layer (`agent/api/`)
 
 **Responsibility**: Interact with vaults.fyi API using x402 payment protocol.
 
@@ -195,16 +230,17 @@ defi_agent/
 - `generate_deposit_tx(user_address, vault_address, amount, asset_address, network)` → Transaction payloads
   - Returns: **list[dict]** - Multiple transactions (e.g., approve + deposit)
   - Each dict: {to, data, value}
-- `generate_redeem_tx(user_address, vault_address, amount, asset_address, network)` → Transaction payload
+- `generate_redeem_tx(user_address, vault_address, amount, asset_address, network, is_full_redemption)` → Transaction payload
   - Returns: **list[dict]** - Transaction(s) for redemption
-  - **Only uses default step** (no multi-step redemptions, requirement Q11)
+  - **Only uses default step** (no multi-step redemptions)
+  - **Handles floating-point precision** for 100% redemptions by subtracting 1 wei
   - Each dict: {to, data, value}
 
 **API Endpoints Used**:
 - `GET /v2/transactions/deposit/{userAddress}/{network}/{vaultAddress}?amount={amount}&assetAddress={assetAddress}`
 - `GET /v2/transactions/redeem/{userAddress}/{network}/{vaultAddress}?amount={amount}&assetAddress={assetAddress}`
 
-### 3. Strategy Layer (`agent/strategy/`)
+### 5. Strategy Layer (`agent/strategy/`)
 
 **Responsibility**: Decision-making logic for vault selection.
 
@@ -243,7 +279,7 @@ defi_agent/
 
 **Note**: Most criteria filtering (APY, TVL, network, asset, transactional) is done by the API via query parameters.
 
-### 4. Core Layer (`agent/core/`)
+### 6. Core Layer (`agent/core/`)
 
 **Responsibility**: Blockchain interactions (wallet, transactions).
 
@@ -297,41 +333,40 @@ defi_agent/
 User-configurable settings for agent behavior.
 
 ```yaml
-# Network (Base only for v1)
+# Network Configuration
 network: base
+rpc_url: null  # Will use BASE_RPC_URL from .env
+
+# Asset Configuration
+asset: USDC
+asset_address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+
+# API Configuration
+vaults_api_url: https://api.vaults.fyi
 
 # Investment Rules
 investment:
   max_allocation_per_vault: 0.10  # 10% max per vault
-  asset: USDC                      # Only USDC supported
-  min_deposit_usd: 0.10            # $0.10 minimum deposit (requirement Q5)
+  min_deposit_usd: 0.10            # $0.10 minimum deposit
 
 # Vault Selection Criteria (passed as API parameters)
 criteria:
-  min_apy: 0.01        # 1% minimum APY (API param: minApy)
-  min_tvl: 1000000     # $1M minimum TVL (API param: minTvl)
-  only_transactional: true  # Only vaults supporting transactions (API param: onlyTransactional)
-  apy_interval: "1day"      # Always use 1-day APY (requirement Q27)
+  min_apy: 0.01                    # 1% minimum APY
+  min_tvl: 100000000               # $100M minimum TVL
+  only_transactional: true         # Only vaults supporting transactions
+  apy_interval: "1day"             # Always use 1-day APY
 
 # Display Configuration
 display:
-  decimals: 2                   # Show 2 decimal places for USD (requirement Q26)
-  position_retry_attempts: 3    # Retry position display after deployment (Q17)
-  position_retry_delay: 5       # Wait 5 seconds between retries (Q17)
+  decimals: 2                      # Show 2 decimal places for USD
+  position_retry_attempts: 3       # Retry position display after deployment
+  position_retry_delay: 5          # Wait 5 seconds between retries
 
 # Vault Whitelist (optional - client-side filtering)
-# If specified, only these vault addresses can be deposited into
 # Leave empty array [] to allow all vaults that pass criteria
 vault_whitelist: []
-# Example:
-# vault_whitelist:
-#   - "0x000000000001CdB57E58Fa75Fe420a0f4D6640D5"  # Specific vault on Base
-#   - "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84"  # Another vault
 
-# Base Network RPC
-rpc_url: "https://mainnet.base.org"
-
-# Verbose error messages (true/false)
+# Verbose error messages
 verbose: false
 ```
 
@@ -460,13 +495,15 @@ Example: `agent.redeem('YearnUSDCV', 50)` - Redeem 50% from position by nickname
    - If not found: Fail with message
 
 3. **Calculate Redeem Amount**
-   - Get position balance: `balance = position.balance_usd`
-   - Calculate: `redeem_amount = balance * (percent / 100)`
-   - Convert to token amount (consider decimals)
+   - Get position balance: `balance_lp_tokens = position.balance_lp_tokens`
+   - Calculate: `redeem_lp_tokens = balance_lp_tokens * (percent / 100)`
+   - Convert to wei using LP token decimals
+   - **Detect full redemption**: If percent >= 99.99%, set `is_full_redemption = True`
 
-4. **Generate Redeem Transaction** (requirement Q11)
-   - Call `api.transactions.generate_redeem_tx(wallet, vault, redeem_amount, usdc_address, 'base')`
+4. **Generate Redeem Transaction**
+   - Call `api.transactions.generate_redeem_tx(wallet, vault, redeem_lp_tokens, lp_decimals, usdc_address, 'base', is_full_redemption)`
    - x402 payment: ~$0.01 USDC
+   - **Precision handling**: If `is_full_redemption=True`, subtracts 1 wei from amount to avoid floating-point rounding errors
    - Result: **list[dict]** - Uses default step only (no multi-step redemption)
 
 5. **Execute Transaction(s)**

@@ -145,23 +145,21 @@ PRIVATE_KEY=0x...                              # Your private key
 BASE_RPC_URL=https://mainnet.base.org          # Base RPC endpoint
 ```
 
-## Requirements Addressed
+## Key Requirements Implemented
 
-This implementation addresses all 27 requirements from questions.md:
+This implementation addresses key requirements for safe and reliable DeFi interactions:
 
-- **Q1**: Check gas (ETH) upfront before transactions
-- **Q5**: Minimum deposit amount of $0.10
-- **Q7**: Clear error messages for empty deposit options
-- **Q10**: Position nicknames (first 10 chars of vault name)
-- **Q11**: Single-step redemption only (no multi-step)
-- **Q12**: Filter zero-balance positions from display
-- **Q17**: Retry position display after deployment (3x, 5s delay)
-- **Q23**: Execute multiple transactions (approve + deposit)
-- **Q24**: Never revoke approvals on failure
-- **Q26**: Display 2 decimal places for USD amounts
-- **Q27**: Display 1-day APY everywhere
-
-See [questions.md](questions.md) for full list and detailed discussion.
+- **Gas Validation**: Check gas (ETH) upfront before transactions
+- **Minimum Deposits**: Minimum deposit amount of $0.10
+- **Clear Errors**: Clear error messages for edge cases
+- **Position Nicknames**: Human-readable nicknames (first 10 chars of vault name)
+- **Simple Redemption**: Single-step redemption only (no multi-step complexity)
+- **Clean Display**: Filter zero-balance positions from display
+- **Retry Logic**: Retry position display after deployment (3x, 5s delay) to handle indexing delays
+- **Multi-Transaction**: Execute multiple transactions (approve + deposit) sequentially
+- **Safety**: Never revoke approvals on failure
+- **Precision**: Handle floating-point precision for 100% redemptions
+- **Formatting**: Display 2 decimal places for USD amounts, 1-day APY everywhere
 
 ## API Costs
 
@@ -238,9 +236,7 @@ agent.redeem('YearnUSDCV', 50)  # Redeem 50%
 
 ## Documentation
 
-- [architecture.md](architecture.md) - Detailed architecture documentation
-- [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) - Implementation strategy
-- [questions.md](questions.md) - 27 requirements and design decisions
+- [architecture.md](architecture.md) - Detailed architecture documentation with design decisions and rationale
 
 ## Notes
 

@@ -56,7 +56,8 @@ class TransactionAPI:
         lp_token_amount: float,
         lp_decimals: int,
         asset_address: str,
-        network: str = 'base'
+        network: str = 'base',
+        is_full_redemption: bool = False
     ) -> List[dict]:
         """
         Generate redeem transaction
@@ -65,11 +66,17 @@ class TransactionAPI:
         Args:
             lp_token_amount: Amount of LP tokens to redeem (e.g., 0.5 LP tokens)
             lp_decimals: Decimals of the LP token (usually 18)
+            is_full_redemption: If True, subtracts 1 wei to avoid rounding errors
         """
         endpoint = f"/v2/transactions/redeem/{user_address}/{network}/{vault_address}"
 
         # Convert LP token amount to wei using LP token decimals
         amount_wei = int(lp_token_amount * (10 ** lp_decimals))
+
+        # For 100% redemptions, subtract 1 wei to avoid floating-point precision issues
+        # This ensures we never try to redeem more than we actually have
+        if is_full_redemption and amount_wei > 0:
+            amount_wei -= 1
 
         params = {
             'amount': amount_wei,

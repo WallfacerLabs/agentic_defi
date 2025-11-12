@@ -59,20 +59,19 @@ class Agent:
         """
         Display current state: gas, USDC balance, positions (requirement Q1)
         """
-        print("\n=== Current State ===\n")
+        from .display import format_state_summary
 
-        # Check gas balance
+        # Get data
         gas_info = self.executor.check_gas_balance()
-        print(f"Gas Balance: {gas_info['balance_eth']:.6f} ETH")
-
-        # Check USDC balance
         idle_info = self.position_api.get_idle_assets(self.wallet.address)
-        print(f"USDC Balance: {format_usd(idle_info['usdc_balance'], self.display_decimals)}")
-
-        # Check positions
         positions = self.position_api.get_positions(self.wallet.address)
-        print(f"Active Positions: {len(positions)}")
 
+        # Display with enhanced formatting
+        print(format_state_summary(
+            gas_info['balance_eth'],
+            idle_info['usdc_balance'],
+            len(positions)
+        ))
         print()
 
     def show_idle_assets(self):
@@ -92,35 +91,20 @@ class Agent:
         Shows 1-day APY (requirement Q27)
         2 decimal places for USD (requirement Q26)
         """
+        from .display import format_positions_table
+
         positions = self.position_api.get_positions(self.wallet.address)
 
         if not positions:
             if retry:
-                print("No positions found yet (may be indexing delay)...")
+                print("  No positions found yet (may be indexing delay)...")
             else:
-                print("\nNo active positions\n")
+                print("  No active positions")
             return
 
-        print("\n=== Current Positions ===\n")
-
-        # Prepare table data
-        table_data = []
-        total_balance = 0
-
-        for position in positions:
-            table_data.append([
-                position['nickname'],
-                position['vault_name'],
-                position['asset'],
-                format_apy(position['apy']) + " (1d)",  # Q27: 1-day APY
-                format_usd(position['balance_usd'], self.display_decimals),  # Q26: 2 decimals
-            ])
-            total_balance += position['balance_usd']
-
-        # Print table
-        headers = ['Nickname', 'Vault Name', 'Asset', 'APY', 'Balance']
-        print(tabulate(table_data, headers=headers, tablefmt='simple'))
-        print(f"\nTotal: {format_usd(total_balance, self.display_decimals)}\n")
+        # Use enhanced table formatting
+        print(format_positions_table(positions, self.display_decimals))
+        print()
 
     def deploy_capital(self, percentage: float):
         """
@@ -186,6 +170,11 @@ class Agent:
             self.asset_address,
             self.network
         )
+
+        # Increase approval amount by 10% buffer to handle vault fees/slippage
+        from .utils import increase_approval_buffer
+        transactions = increase_approval_buffer(transactions, buffer_percent=10.0)
+
         print(f"Generated {len(transactions)} transaction(s)")
 
         # 9. Execute transactions (Q23, Q24)
@@ -193,21 +182,14 @@ class Agent:
         try:
             tx_hashes = self.executor.execute_multiple(transactions)
 
-            # Display success
-            print(f"\n✓ Deployed {format_usd(deploy_amount_usd, self.display_decimals)} "
-                  f"to {selected_vault['vault_name']}")
-
-            # Show transaction hashes
-            if len(tx_hashes) == 1:
-                print(f"Transaction: {tx_hashes[0]}")
-            else:
-                for i, tx_hash in enumerate(tx_hashes):
-                    action_name = "approve" if i == 0 else "deposit"
-                    print(f"Transaction {i+1} ({action_name}): {tx_hash}")
-
         except Exception as e:
-            print(f"\n❌ Transaction failed: {str(e)}\n")
+            from .display import format_error
+            print(format_error(f"Transaction failed: {str(e)}"))
             return
+
+        # Display success
+        from .display import format_deploy_success
+        print(format_deploy_success(deploy_amount_usd, selected_vault['vault_name'], tx_hashes, self.display_decimals))
 
         # 10. Display positions with retry (Q17)
         print("\nRefreshing positions...")
@@ -272,13 +254,18 @@ class Agent:
 
         # 4. Generate transaction (Q11 - single step only)
         print("Generating redemption transaction...")
+
+        # For 100% redemptions, pass a flag to handle precision issues
+        is_full_redemption = (percentage >= 99.99)
+
         transactions = self.transaction_api.generate_redeem_tx(
             self.wallet.address,
             position['vault_address'],
             redeem_lp_tokens,
             position['lp_decimals'],
             self.asset_address,
-            self.network
+            self.network,
+            is_full_redemption=is_full_redemption
         )
 
         # 5. Execute transaction(s)
@@ -286,18 +273,22 @@ class Agent:
         try:
             if len(transactions) == 1:
                 tx_hash = self.executor.execute(transactions[0])
-                print(f"\n✓ Redeemed {format_usd(redeem_amount_usd, self.display_decimals)} "
-                      f"from {position['vault_name']}")
-                print(f"Transaction: {tx_hash}")
+                tx_hashes = [tx_hash]
             else:
                 tx_hashes = self.executor.execute_multiple(transactions)
-                print(f"\n✓ Redeemed {format_usd(redeem_amount_usd, self.display_decimals)} "
-                      f"from {position['vault_name']}")
-                for i, tx_hash in enumerate(tx_hashes):
-                    print(f"Transaction {i+1}: {tx_hash}")
+
+            # Display success
+            from .display import format_redeem_success
+            if len(tx_hashes) == 1:
+                print(format_redeem_success(redeem_amount_usd, position['vault_name'], tx_hashes[0], self.display_decimals))
+            else:
+                print(format_redeem_success(redeem_amount_usd, position['vault_name'], tx_hashes[0], self.display_decimals))
+                for i in range(1, len(tx_hashes)):
+                    print(f"  Transaction {i+1}: {tx_hashes[i]}")
 
         except Exception as e:
-            print(f"\n❌ Transaction failed: {str(e)}\n")
+            from .display import format_error
+            print(format_error(f"Transaction failed: {str(e)}"))
             return
 
         # Show updated positions
@@ -322,3 +313,47 @@ class Agent:
             print()
 
         print("✓ All positions redeemed\n")
+
+    def help(self):
+        """Display help information with available commands"""
+        from .display import section_header, subsection_header, command_list, tip_box
+
+        print(section_header("DeFi Agent Help"))
+
+        # Available commands
+        commands = [
+            ('agent.show_state()', 'Display gas balance, USDC balance, and position count'),
+            ('agent.show_positions()', 'Show detailed position table with APY and balances'),
+            ('agent.show_idle_assets()', 'Show idle USDC available for deployment'),
+            ('agent.deploy_capital(percentage)', 'Deploy % of idle USDC to highest yield vault'),
+            ('agent.redeem(nickname, percentage)', 'Redeem % from specific position by nickname'),
+            ('agent.redeem_all()', 'Redeem 100% from all active positions'),
+            ('agent.help()', 'Show this help message'),
+        ]
+
+        print(command_list(commands))
+
+        # Examples
+        print("\n" + subsection_header("Examples"))
+
+        examples = [
+            "agent.deploy_capital(10)        # Deploy 10% of idle USDC",
+            "agent.redeem('SparkUSDCV', 50)  # Redeem 50% from SparkUSDCV",
+            "agent.show_positions()          # Refresh position view",
+        ]
+
+        for example in examples:
+            print(f"  {example}")
+
+        print()
+
+        # Tips
+        tips = [
+            "Nicknames are first 10 chars of vault name (spaces removed)",
+            "Minimum deposit: $0.10 USDC",
+            "All transactions require gas (ETH)",
+            "Positions may take 5-10 seconds to update after transactions",
+        ]
+
+        print(tip_box(tips))
+        print()
