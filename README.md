@@ -159,8 +159,7 @@ python examples/interactive.py
 The interactive console will guide you through:
 - Checking your wallet balance and gas
 - Viewing idle USDC available for deployment
-- Discovering the best yield opportunities
-- Deploying capital to vaults
+- Discovering the best yield opportunities and deploying capital to vaults
 - Managing and redeeming positions
 
 💡 **First-time users**: This is where you should begin!
