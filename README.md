@@ -20,13 +20,21 @@ git clone https://github.com/WallfacerLabs/agentic_defi.git
 cd agentic_defi
 ```
 
-2. **Set up virtual environment**:
+2. **Create and activate virtual environment** (REQUIRED):
+
+⚠️ **You MUST create a virtual environment before installing dependencies**
+
 ```bash
+# Create virtual environment
 python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Activate it (run this every time you use the agent)
+source venv/bin/activate  # On macOS/Linux
+# OR
+venv\Scripts\activate     # On Windows
 ```
 
-3. **Install dependencies**:
+3. **Install dependencies** (make sure venv is activated first):
 ```bash
 pip install -r requirements.txt
 ```
@@ -39,7 +47,7 @@ cp .env.example .env
 
 5. **Generate Ethereum wallet** (if you don't have one):
 ```bash
-# Generate a new Ethereum key pair and add to .env
+# Make sure your virtual environment is activated, then:
 python3 helpers/generate_ethereum_key_pair.py
 
 # Or if you already have a private key, manually edit .env:
@@ -48,7 +56,7 @@ python3 helpers/generate_ethereum_key_pair.py
 
 6. **View your wallet address**:
 ```bash
-# Display the wallet address derived from your private key
+# Make sure your virtual environment is activated, then:
 python3 helpers/show_wallet_address.py
 ```
 
@@ -83,6 +91,13 @@ You can bridge funds to Base network using:
 ```
 
 ## Quick Start
+
+**Important**: Make sure your virtual environment is activated before running any commands:
+```bash
+source venv/bin/activate  # On macOS/Linux
+# OR
+venv\Scripts\activate     # On Windows
+```
 
 ### Basic Usage
 
@@ -123,7 +138,12 @@ python examples/interactive.py
 
 ## Wallet Management
 
-The `helpers/` directory contains utilities for managing your Ethereum wallet:
+The `helpers/` directory contains utilities for managing your Ethereum wallet.
+
+**Remember**: Always activate your virtual environment first:
+```bash
+source venv/bin/activate  # On macOS/Linux
+```
 
 ### Generate New Wallet
 
