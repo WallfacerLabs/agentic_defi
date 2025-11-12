@@ -1,6 +1,19 @@
-# DeFi Agent
+# Agentic DeFi
 
 A DeFi capital management agent-like interactive console that demonstrates the mechanics of autonomous DeFi interactions. Manages USDC on Base network, discovers idle capital, analyzes yield opportunities, and deploys capital to the best available vaults. Built to provide building blocks and insights into how to design and deploy complex fund managements agents. Optimized for AI, no paper agreements or api keys required.
+
+## 🔐 Truly Non-Custodial DeFi
+
+**You own and control everything:**
+
+- ✅ **Your keys, your crypto** - Private keys never leave your machine
+- ✅ **Direct on-chain transactions** - No intermediaries or custodians
+- ✅ **Direct smart contract interactions** - Transactions signed and broadcast by YOU
+- ✅ **You own the LP tokens** - Vault shares go directly to YOUR wallet
+- ✅ **Full transparency** - Every transaction is visible on-chain
+- ✅ **No middlemen** - Direct interaction with DeFi protocols
+
+This is real DeFi: non-custodial, permissionless, and transparent.
 
 ## Features
 
