@@ -1,6 +1,6 @@
 # DeFi Agent
 
-A DeFi capital management agent that demonstrates the mechanics of autonomous DeFi interactions. Manages USDC on Base network, discovers idle capital, analyzes yield opportunities, and deploys capital to the best available vaults.
+A DeFi capital management agent-like interactive console that demonstrates the mechanics of autonomous DeFi interactions. Manages USDC on Base network, discovers idle capital, analyzes yield opportunities, and deploys capital to the best available vaults. Built to provide building blocks and insights into how to design and deploy complex fund managements agents. Optimized for AI, no paper agreements or api keys required.
 
 ## Features
 
@@ -16,25 +16,64 @@ A DeFi capital management agent that demonstrates the mechanics of autonomous De
 
 1. **Clone the repository**:
 ```bash
-git clone <repository-url>
-cd defi_agent
+git clone https://github.com/WallfacerLabs/agentic_defi.git
+cd agentic_defi
 ```
 
-2. **Install dependencies**:
+2. **Set up virtual environment**:
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. **Install dependencies**:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. **Configure environment**:
+4. **Configure environment**:
 ```bash
 # Copy .env.example to .env
 cp .env.example .env
+```
 
-# Edit .env and add your private key
+5. **Generate Ethereum wallet** (if you don't have one):
+```bash
+# Generate a new Ethereum key pair and add to .env
+python3 helpers/generate_ethereum_key_pair.py
+
+# Or if you already have a private key, manually edit .env:
 # PRIVATE_KEY=0x...
 ```
 
-4. **Configure settings** (optional):
+6. **View your wallet address**:
+```bash
+# Display the wallet address derived from your private key
+python3 helpers/show_wallet_address.py
+```
+
+7. **Fund your wallet**:
+
+⚠️ **IMPORTANT SECURITY WARNING** ⚠️
+```
+This is a TEST SETUP with your private key stored in a plain text file.
+DO NOT use this wallet for production or store significant funds.
+
+Recommended for testing: NO MORE THAN $20 TOTAL VALUE
+
+This wallet should ONLY be used for testing and learning purposes.
+```
+
+Send funds to your wallet address (from step 6):
+- **ETH** (for gas fees): `0.002 ETH` (enough for multiple transactions)
+- **USDC** (for deposits): `10 USDC` (to test the agent)
+
+You can bridge funds to Base network using:
+- [Official Base Bridge](https://bridge.base.org)
+- [Relay Bridge](https://relay.link/bridge/base)
+- Or send directly from a CEX that supports Base network
+
+8. **Configure settings** (optional):
 ```bash
 # Edit config.yaml to adjust:
 # - Minimum APY threshold
@@ -80,6 +119,66 @@ python examples/basic_usage.py
 
 # Interactive guide
 python examples/interactive.py
+```
+
+## Wallet Management
+
+The `helpers/` directory contains utilities for managing your Ethereum wallet:
+
+### Generate New Wallet
+
+```bash
+python3 helpers/generate_ethereum_key_pair.py
+```
+
+This script will:
+- Check if a private key already exists in `.env`
+- Generate a new Ethereum key pair if no key exists
+- Automatically add the private key to `.env`
+- Display both the private key and public address
+
+**Output example**:
+```
+Generating new Ethereum key pair...
+
+======================================================================
+NEW ETHEREUM KEY PAIR GENERATED
+======================================================================
+
+Private Key: 0x1234567890abcdef...
+Public Key (Address): 0xABCDEF1234567890...
+
+======================================================================
+✓ Private key has been added to .env file
+======================================================================
+
+⚠️  IMPORTANT: Keep your private key secure and never share it!
+⚠️  Make sure .env is in your .gitignore file
+```
+
+### View Wallet Address
+
+```bash
+python3 helpers/show_wallet_address.py
+```
+
+This script displays the wallet address derived from the private key in your `.env` file. Useful when you need to:
+- Find your wallet address to send ETH for gas
+- Verify which wallet you're using
+- Share your address to receive funds
+
+**Output example**:
+```
+======================================================================
+WALLET INFORMATION
+======================================================================
+
+Wallet Address: 0xABCDEF1234567890...
+Private Key: 0x1234567890abcdef...
+
+======================================================================
+⚠️  Keep your private key secure and never share it!
+======================================================================
 ```
 
 ## Architecture
