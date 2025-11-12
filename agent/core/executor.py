@@ -4,6 +4,7 @@ Handles gas estimation, transaction signing, broadcasting, and confirmation
 """
 
 import os
+import time
 from typing import List, Tuple
 from web3 import Web3
 from dotenv import load_dotenv
@@ -128,6 +129,12 @@ class TransactionExecutor:
                 use_pending = i > 0
                 tx_hash = self.execute(tx_payload, wait_for_confirmation=True, use_pending_nonce=use_pending)
                 tx_hashes.append(tx_hash)
+
+                # Wait for state to propagate before next transaction
+                # This ensures gas estimation for the next tx sees the updated state
+                if i < len(tx_payloads) - 1:  # Not the last transaction
+                    time.sleep(3)
+
             except Exception as e:
                 # If approval succeeded but deposit failed, DO NOT revoke (Q24)
                 if i > 0:
