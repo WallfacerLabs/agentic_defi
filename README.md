@@ -82,8 +82,17 @@ You can bridge funds to Base network using:
 - Or send directly from a CEX that supports Base network
 
 8. **Configure settings** (optional):
+
+⚠️ **SKIP THIS ON YOUR FIRST RUN** ⚠️
+```
+For first-time users: DO NOT modify config.yaml yet!
+Run the agent with default settings first to understand how it works.
+
+Only adjust these settings after you've successfully completed at least one full cycle.
+```
+
+Advanced users can edit `config.yaml` to adjust:
 ```bash
-# Edit config.yaml to adjust:
 # - Minimum APY threshold
 # - Minimum TVL threshold
 # - Vault whitelist
@@ -126,15 +135,22 @@ agent.redeem('YearnUSDCV', 50)
 agent.redeem_all()
 ```
 
-### Run Examples
+### 🚀 Run the Interactive Console (START HERE!)
+
+**This is the core experience - run this to get started:**
 
 ```bash
-# Basic usage example
-python examples/basic_usage.py
-
-# Interactive guide
 python examples/interactive.py
 ```
+
+The interactive console will guide you through:
+- Checking your wallet balance and gas
+- Viewing idle USDC available for deployment
+- Discovering the best yield opportunities
+- Deploying capital to vaults
+- Managing and redeeming positions
+
+💡 **First-time users**: This is where you should begin!
 
 ## Wallet Management
 
@@ -282,14 +298,17 @@ This implementation addresses key requirements for safe and reliable DeFi intera
 
 ## API Costs
 
-The agent uses x402 payment protocol for API access. Typical costs:
+The agent uses x402 payment protocol for API access.
 
+⚠️ **Note: These are temporary test prices and subject to change** ⚠️
+
+Current test pricing:
 - `get_idle_assets()`: ~$0.01 USDC
 - `get_positions()`: ~$0.01 USDC
 - `get_best_deposit_options()`: ~$0.01 USDC
 - `generate_deposit_tx()`: ~$0.01 USDC
 
-A full `deploy_capital()` operation costs approximately **$0.04 USDC** in API payments.
+A full `deploy_capital()` operation costs approximately **$0.04 USDC** in API payments during testing.
 
 ## Safety Features
 
@@ -368,15 +387,6 @@ agent.redeem('YearnUSDCV', 50)  # Redeem 50%
 ## License
 
 MIT
-
-## Contributing
-
-This is a showcase project. For production use, consider:
-- Adding comprehensive test suite
-- Implementing multi-chain support
-- Adding historical tracking
-- Implementing advanced strategies
-- Adding position rebalancing
 
 ---
 
