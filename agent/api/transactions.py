@@ -73,10 +73,11 @@ class TransactionAPI:
         # Convert LP token amount to wei using LP token decimals
         amount_wei = int(lp_token_amount * (10 ** lp_decimals))
 
-        # For 100% redemptions, subtract 1 wei to avoid floating-point precision issues
+        # For 100% redemptions, subtract 100 wei to avoid floating-point precision issues
         # This ensures we never try to redeem more than we actually have
-        if is_full_redemption and amount_wei > 0:
-            amount_wei -= 1
+        # Using 100 wei provides a safety margin (insignificant amount, ~0.0000000000000001 tokens)
+        if is_full_redemption and amount_wei > 100:
+            amount_wei -= 100
 
         params = {
             'amount': amount_wei,
